@@ -22,9 +22,9 @@ Datasets:
   V2_03:
     label: V203
 Algorithms:
-  svo_ceres_rp:
+  vislam_rp:
     fn: traj_est
-    label: svoceres-rp
-  svo_ceres_ba: 
+    label: vislam-rp
+  vislam_ba: 
     fn: ba_estimate
-    label: svoceres-ba
+    label: vislam-ba
