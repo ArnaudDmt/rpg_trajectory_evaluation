@@ -647,8 +647,8 @@ if __name__ == '__main__':
                 json.dump(dataset_alg_t_stats[didx], f, indent=2)
 
     import subprocess as s
-    s.call(['notify-send', 'rpg_trajectory_evaluation finished',
-            'results in: {0}'.format(os.path.abspath(output_dir))])
+    # s.call(['notify-send', 'rpg_trajectory_evaluation finished',
+    #         'results in: {0}'.format(os.path.abspath(output_dir))])
     print("#####################################")
     print("<<< Finished.")
     print("#####################################")
