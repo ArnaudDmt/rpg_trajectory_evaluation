@@ -74,9 +74,14 @@ def analyze_multiple_trials(results_dir, est_type, n_trials,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='''Analyze trajectory estimate in a folder.''')
+    # Array argument: list of sublengths
+    parser.add_argument('--relative_errors_sublengths', nargs='+', type=float,  help='List of sublengths')
     parser.add_argument(
         'result_dir', type=str,
         help="Folder containing the groundtruth and the estimate.")
+    parser.add_argument(
+        '--estimator_name', type=str,
+        help="Name of the evaluated state estimator.")
     parser.add_argument(
         '--plots_dir', type=str,
         help="Folder to output plots",
