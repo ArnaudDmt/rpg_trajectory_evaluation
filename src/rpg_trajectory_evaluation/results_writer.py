@@ -11,6 +11,8 @@ def compute_statistics(data_vec):
             np.sqrt(np.dot(data_vec, data_vec) / len(data_vec)))
         stats['mean'] = float(np.mean(data_vec))
         stats['median'] = float(np.median(data_vec))
+        stats['q1'] = float(np.quantile(data_vec, 0.25))
+        stats['q3'] = float(np.quantile(data_vec, 0.75))
         stats['std'] = float(np.std(data_vec))
         stats['min'] = float(np.min(data_vec))
         stats['max'] = float(np.max(data_vec))
@@ -19,6 +21,8 @@ def compute_statistics(data_vec):
         stats['rmse'] = 0
         stats['mean'] = 0
         stats['median'] = 0
+        stats['q1'] = 0
+        stats['q3'] = 0
         stats['std'] = 0
         stats['min'] = 0
         stats['max'] = 0
