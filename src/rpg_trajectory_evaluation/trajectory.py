@@ -21,6 +21,7 @@ import transformations as tf
 class Trajectory:
     rel_error_cached_nm = 'cached_rel_err'
     rel_error_prefix = 'relative_error_statistics_'
+    abs_error_cached_nm = 'cached_abs_err'
     saved_res_dir_nm = 'saved_results'
     cache_res_dir_nm = 'cached'
     default_boxplot_perc = [0.1, 0.2, 0.3, 0.4, 0.5]
@@ -98,6 +99,9 @@ class Trajectory:
         self.cached_rel_err_fn = os.path.join(
             self.cache_results_dir,
             self.rel_error_cached_nm+self.suffix_str+".pickle")
+        self.cached_abs_err_fn = os.path.join(
+            self.cache_results_dir,
+            self.abs_error_cached_nm+self.suffix_str+".pickle")
 
         print("Loading {0} and {1}...".format(nm_gt, nm_est))
         self.data_loaded = self.load_data(nm_gt, nm_est, nm_matches)
@@ -165,6 +169,11 @@ class Trajectory:
                 pickle.dump(self.rel_errors, f)
             print(Fore.YELLOW + "Saved relative error to {0}.".format(
                 self.cached_rel_err_fn))
+        if self.abs_errors:
+            with open(self.cached_abs_err_fn, 'wb') as f:
+                pickle.dump(self.abs_errors, f)
+            print(Fore.YELLOW + "Saved absolute error to {0}.".format(
+                self.cached_abs_err_fn))
 
     @staticmethod
     def get_suffix_str(suffix):
@@ -293,6 +302,8 @@ class Trajectory:
 
             self.abs_errors['abs_e_scale_perc'] = e_scale_perc
             self.abs_errors['abs_e_scale_stats'] = stats_scale
+            self.abs_errors['accum_distances'] = self.accum_distances
+
             print(Fore.GREEN+'...RMSE calculated.')
         return
 
@@ -325,7 +336,7 @@ class Trajectory:
             self.rel_error_stats_fns.append(dist_fn)
 
     def compute_relative_error_at_subtraj_len(self, subtraj_len,
-                                              max_dist_diff=-1):
+                                              max_dist_diff=-1, num_pairs = None):
         if max_dist_diff < 0:
             max_dist_diff = 0.2 * subtraj_len
 
@@ -340,7 +351,7 @@ class Trajectory:
                 traj_err.compute_relative_error(
                     self.p_es, self.q_es, self.p_gt, self.q_gt, Tcm,
                     subtraj_len, max_dist_diff, self.accum_distances,
-                    self.scale)
+                    self.scale, num_pairs)
             dist_rel_err = {'rel_trans': e_trans,
                             'rel_trans_stats':
                             res_writer.compute_statistics(e_trans),
@@ -362,16 +373,16 @@ class Trajectory:
             self.rel_errors[subtraj_len] = dist_rel_err
         return True
 
-    def compute_relative_errors(self, subtraj_lengths=[]):
+    def compute_relative_errors(self, subtraj_lengths=[], num_pairs = None):
         suc = True
         if subtraj_lengths:
             for l in subtraj_lengths:
-                suc = suc and self.compute_relative_error_at_subtraj_len(l)
+                suc = suc and self.compute_relative_error_at_subtraj_len(l, num_pairs = num_pairs)
         else:
             print(Fore.RED+"Computing the relative errors based on preset"
                   " subtrajectory lengths...")
             for l in self.preset_boxplot_distances:
-                suc = suc and self.compute_relative_error_at_subtraj_len(l)
+                suc = suc and self.compute_relative_error_at_subtraj_len(l, num_pairs = num_pairs)
         self.success = suc
         print(Fore.GREEN+"...done.")
 

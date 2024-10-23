@@ -15,16 +15,37 @@ import plot_utils as pu
 from fn_constants import kNsToEstFnMapping, kNsToMatchFnMapping, kFnExt
 from multiple_traj_errors import MulTrajError
 
+import plotly.graph_objects as go
+
+
+
+# from contextlib import contextmanager
+# import sys, os
+
+# @contextmanager
+# def suppress_stdout():
+#     with open(os.devnull, "w") as devnull:
+#         old_stdout = sys.stdout
+#         sys.stdout = devnull
+#         try:  
+#             yield
+#         finally:
+#             sys.stdout = old_stdout
+
 init(autoreset=True)
-rc('font', **{'family': 'serif', 'serif': ['Cardo']})
+
+# rc('font', **{'family': 'serif', 'serif': ['Cardo']})
 rc('text', usetex=True)
 
 FORMAT = '.pdf'
 
 
+
+
 def analyze_multiple_trials(results_dir, est_type, n_trials,
                             recalculate_errors=False,
-                            preset_boxplot_distances=[],
+                            preset_boxplot_distances=[], 
+                            num_samples_rel_error = None,
                             preset_boxplot_percentages=[0.1, 0.2, 0.3, 0.4, 0.5],
                             compute_odometry_error=True):
     traj_list = []
@@ -34,7 +55,7 @@ def analyze_multiple_trials(results_dir, est_type, n_trials,
             suffix = ''
         else:
             suffix = str(trial_i)
-        print(Fore.RED+"### Trial {0} ###".format(trial_i))
+        # print(Fore.RED+"### Trial {0} ###".format(trial_i))
 
         match_base_fn = kNsToMatchFnMapping[est_type]+suffix+'.'+kFnExt
 
@@ -52,20 +73,20 @@ def analyze_multiple_trials(results_dir, est_type, n_trials,
         if traj.data_loaded:
             traj.compute_absolute_error()
             if compute_odometry_error:
-                traj.compute_relative_errors()
+                traj.compute_relative_errors(num_pairs = num_samples_rel_error)
         if traj.success:
             traj.cache_current_error()
             traj.write_errors_to_yaml()
 
         if traj.success and not preset_boxplot_distances:
-            print("Save the boxplot distances for next trials.")
+            # print("Save the boxplot distances for next trials.")
             preset_boxplot_distances = traj.preset_boxplot_distances
 
         if traj.success:
             mt_error.addTrajectoryError(traj, trial_i)
             traj_list.append(traj)
-        else:
-            print("Trials {0} fails, will not count.".format(trial_i))
+        # else:
+            # print("Trials {0} fails, will not count.".format(trial_i))
     mt_error.summary()
     mt_error.updateStatistics()
     return traj_list, mt_error
@@ -76,6 +97,7 @@ if __name__ == '__main__':
         description='''Analyze trajectory estimate in a folder.''')
     # Array argument: list of sublengths
     parser.add_argument('--relative_errors_sublengths', nargs='+', type=float,  help='List of sublengths')
+    parser.add_argument('--num_samples_rel_error', type=int, default=None, help='Number of samples we want to use for the relative error computation.')
     parser.add_argument(
         'result_dir', type=str,
         help="Folder containing the groundtruth and the estimate.")
@@ -132,54 +154,65 @@ if __name__ == '__main__':
     if args.png:
         FORMAT = '.png'
 
-    print(Fore.YELLOW + "=== Summary ===")
-    print(Fore.YELLOW +
-          "Going to analyze the results in {0}.".format(args.result_dir))
-    print(Fore.YELLOW +
-          "Will analyze estimate types: {0}".format(args.est_types))
-    print(Fore.YELLOW + 
-          "The plots will saved in {0}.".format(plots_dirs))
+    if args.estimator_name is not None:
+            print(Fore.GREEN + "#### Start processing " + args.estimator_name)
+
+    # print(Fore.YELLOW + "=== Summary ===")
+    # print(Fore.YELLOW +
+    #       "Going to analyze the results in {0}.".format(args.result_dir))
+    # print(Fore.YELLOW +
+    #       "Will analyze estimate types: {0}".format(args.est_types))
+    # print(Fore.YELLOW + 
+    #       "The plots will saved in {0}.".format(plots_dirs))
     n_trials = 1
     if args.mul_trials:
-        print(Fore.YELLOW + 
-              "We will ananlyze multiple trials #{0}".format(args.mul_trials))
+        # print(Fore.YELLOW + 
+        #       "We will ananlyze multiple trials #{0}".format(args.mul_trials))
         n_trials = args.mul_trials
         if len(args.mul_plot_idx) == 0:
             args.mul_plot_idx = (np.arange(args.mul_trials)).tolist()
-        print(Fore.YELLOW + 
-              "We will plot trials {0}.".format(args.mul_plot_idx))
+        # print(Fore.YELLOW + 
+        #       "We will plot trials {0}.".format(args.mul_plot_idx))
     else:
         args.mul_plot_idx = [0]
-    assert len(args.mul_plot_idx) is 1, "Multiple plots not supported yet"
+    assert len(args.mul_plot_idx) == 1, "Multiple plots not supported yet"
 
     for est_type_i, plot_dir_i in zip(args.est_types, plots_dirs):
-        print(Fore.RED +
-              "#### Processing error type {0} ####".format(est_type_i))
+        # print(Fore.RED +
+        #       "#### Processing error type {0} ####".format(est_type_i))
         mt_error = MulTrajError()
+        #with suppress_stdout():
         traj_list, mt_error = analyze_multiple_trials(
-            args.result_dir, est_type_i, n_trials, args.recalculate_errors)
+            args.result_dir, est_type_i, n_trials, args.recalculate_errors, args.relative_errors_sublengths, num_samples_rel_error=args.num_samples_rel_error)
         if traj_list:
             plot_traj = traj_list[args.mul_plot_idx[0]]
-        else:
-            print("No success runs, not plotting.")
+        # else:
+        #     print("No success runs, not plotting.")
 
         if n_trials > 1:
-            print(">>> Save results for multiple runs in {0}...".format(
-                mt_error.save_results_dir))
+            # print(">>> Save results for multiple runs in {0}...".format(
+            #     mt_error.save_results_dir))
             mt_error.saveErrors()
             mt_error.cache_current_error()
 
         if not args.plot:
-            print("#### Skip plotting and go to next error type.")
+            # print("#### Skip plotting and go to next error type.")
             continue
 
-        print(Fore.MAGENTA +
-              ">>> Plotting absolute error for one trajectory...")
+        # print(Fore.MAGENTA +
+        #       ">>> Plotting absolute error for one trajectory...")
         fig = plt.figure(figsize=(6, 5.5))
         ax = fig.add_subplot(111, aspect='equal',
                              xlabel='x [m]', ylabel='y [m]')
-        pu.plot_trajectory_top(ax, plot_traj.p_es_aligned, 'b', 'Estimate')
-        pu.plot_trajectory_top(ax, plot_traj.p_gt, 'm', 'Groundtruth')
+        figTest = go.Figure()
+
+        figTest.update_layout(
+            xaxis=dict(title='x [m]', scaleanchor='y', scaleratio=1),
+            yaxis=dict(title='y [m]')
+        )
+        pu.plot_trajectory_top(figTest, 'olive', ax, plot_traj.p_es_aligned, 'b', 'Estimate')
+        pu.plot_trajectory_top(figTest, 'plum', ax, plot_traj.p_gt, 'm', 'Groundtruth')
+        figTest.show()
         pu.plot_aligned_top(ax, plot_traj.p_es_aligned, plot_traj.p_gt,
                             plot_traj.align_num_frames)
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -260,7 +293,7 @@ if __name__ == '__main__':
             fig.savefig(plot_dir_i+'/scale_error_traj' + '_' +
                         plot_traj.align_str + FORMAT, bbox_inches="tight")
 
-        print(Fore.MAGENTA+">>> Plotting relative (odometry) error...")
+        # print(Fore.MAGENTA+">>> Plotting relative (odometry) error...")
         suffix = ''
         if n_trials > 1:
             suffix = '_mt'
@@ -305,8 +338,11 @@ if __name__ == '__main__':
                     bbox_inches="tight")
         plt.close(fig)
 
-        print(Fore.GREEN +
-              "#### Done processing error type {0} ####".format(est_type_i))
+        # print(Fore.GREEN +
+        #       "#### Done processing error type {0} ####".format(est_type_i))
+        if args.estimator_name is not None:
+            print(Fore.GREEN + "#### Done processing " + args.estimator_name)
+        
     import subprocess as s
     # s.call(['notify-send', 'rpg_trajectory_evaluation finished',
     #         'results in: {0}'.format(os.path.abspath(args.result_dir))])

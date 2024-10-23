@@ -4,6 +4,7 @@
 """
 
 import os
+import random
 import numpy as np
 import transformations as tf
 
@@ -22,18 +23,27 @@ def get_distance_from_start(gt_translation):
     return distances
 
 
-def compute_comparison_indices_length(distances, dist, max_dist_diff):
+def compute_comparison_indices_length(distances, dist, max_dist_diff, num_pairs = None):
     max_idx = len(distances)
     comparisons = []
-    for idx, d in enumerate(distances):
+    valid_indices = [idx for idx in range(max_idx) if distances[idx] + dist <= distances[-1]]
+
+    # Choose random start indices from the valid range
+    if num_pairs == None:
+        chosen_indices = [idx for idx in range(max_idx)]
+    else:
+        chosen_indices = random.sample(valid_indices, min(num_pairs, len(valid_indices)))
+    
+    for idx in chosen_indices:
         best_idx = -1
         error = max_dist_diff
         for i in range(idx, max_idx):
-            if np.abs(distances[i]-(d+dist)) < error:
+            if np.abs(distances[i] - (distances[idx] + dist)) < error:
                 best_idx = i
-                error = np.abs(distances[i] - (d+dist))
+                error = np.abs(distances[i] - (distances[idx] + dist))
         if best_idx != -1:
-            comparisons.append(best_idx)
+            comparisons.append((idx, best_idx))
+
     return comparisons
 
 
