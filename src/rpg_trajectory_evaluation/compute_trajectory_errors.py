@@ -42,6 +42,7 @@ def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
         T_error_in_w = np.dot(T_c2_rot, np.dot(T_error_in_c2, np.linalg.inv(T_c2_rot)))
         errors.append(T_error_in_w)
 
+    error_trans_z = []
     error_trans_norm = []
     error_trans_perc = []
     error_yaw = []
@@ -50,6 +51,7 @@ def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
     e_rot_deg_per_m = []
     for e in errors:
         tn = np.linalg.norm(e[0:3, 3])
+        error_trans_z.append(e[2, 3])
         error_trans_norm.append(tn)
         error_trans_perc.append(tn / dist * 100)
         ypr_angles = tf.euler_from_matrix(e, 'rzyx')
@@ -59,14 +61,14 @@ def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
             np.sqrt(ypr_angles[1]**2+ypr_angles[2]**2)*180.0/np.pi)
         e_rot_deg_per_m.append(e_rot[-1] / dist)
 
-    return errors, np.array(error_trans_norm), np.array(error_trans_perc),\
+    return errors, np.array(error_trans_norm), np.array(error_trans_z),  np.array(error_trans_perc),\
         np.array(error_yaw), np.array(error_gravity), np.array(e_rot),\
         np.array(e_rot_deg_per_m)
-
 
 def compute_absolute_error(p_es_aligned, q_es_aligned, p_gt, q_gt):
     e_trans_vec = (p_gt-p_es_aligned)
     e_trans = np.sqrt(np.sum(e_trans_vec**2, 1))
+    e_trans_z = e_trans_vec[:,2]
 
     # orientation error
     e_rot = np.zeros((len(e_trans,)))
@@ -85,4 +87,4 @@ def compute_absolute_error(p_es_aligned, q_es_aligned, p_gt, q_gt):
     dist_es = np.sqrt(np.sum(np.multiply(motion_es, motion_es), 1))
     e_scale_perc = np.abs((np.divide(dist_es, dist_gt)-1.0) * 100)
 
-    return e_trans, e_trans_vec, e_rot, e_ypr, e_scale_perc
+    return e_trans, e_trans_z, e_trans_vec, e_rot, e_ypr, e_scale_perc

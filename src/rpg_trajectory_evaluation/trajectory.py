@@ -281,7 +281,7 @@ class Trajectory:
             print(Fore.RED+'Calculating RMSE...')
             # align trajectory if necessary
             self.align_trajectory()
-            e_trans, e_trans_vec, e_rot, e_ypr, e_scale_perc =\
+            e_trans, e_trans_z, e_trans_vec, e_rot, e_ypr, e_scale_perc =\
                 traj_err.compute_absolute_error(self.p_es_aligned,
                                                 self.q_es_aligned,
                                                 self.p_gt,
@@ -293,6 +293,7 @@ class Trajectory:
             self.abs_errors['abs_e_trans'] = e_trans
             self.abs_errors['abs_e_trans_stats'] = stats_trans
 
+            self.abs_errors['abs_e_trans_z'] = e_trans_z
             self.abs_errors['abs_e_trans_vec'] = e_trans_vec
 
             self.abs_errors['abs_e_rot'] = e_rot
@@ -347,7 +348,7 @@ class Trajectory:
             print("Computing relative error at sub-trajectory "
                   "length {0}".format(subtraj_len))
             Tcm = np.identity(4)
-            _, e_trans, e_trans_perc, e_yaw, e_gravity, e_rot, e_rot_deg_per_m =\
+            _, e_trans, e_trans_z, e_trans_perc, e_yaw, e_gravity, e_rot, e_rot_deg_per_m =\
                 traj_err.compute_relative_error(
                     self.p_es, self.q_es, self.p_gt, self.q_gt, Tcm,
                     subtraj_len, max_dist_diff, self.accum_distances,
@@ -355,6 +356,9 @@ class Trajectory:
             dist_rel_err = {'rel_trans': e_trans,
                             'rel_trans_stats':
                             res_writer.compute_statistics(e_trans),
+                            'rel_trans_z': e_trans_z,
+                            'rel_trans_stats_z':
+                            res_writer.compute_statistics(e_trans_z),
                             'rel_trans_perc': e_trans_perc,
                             'rel_trans_perc_stats':
                             res_writer.compute_statistics(e_trans_perc),
@@ -370,6 +374,7 @@ class Trajectory:
                             'rel_rot_deg_per_m': e_rot_deg_per_m,
                             'rel_rot_deg_per_m_stats':
                             res_writer.compute_statistics(e_rot_deg_per_m)}
+            
             self.rel_errors[subtraj_len] = dist_rel_err
         return True
 
