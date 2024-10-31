@@ -96,7 +96,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='''Analyze trajectory estimate in a folder.''')
     # Array argument: list of sublengths
-    parser.add_argument('--relative_errors_sublengths', nargs='+', type=float,  help='List of sublengths')
+    parser.add_argument('--predefined_sublengths', nargs='+', type=float,  help='List of sublengths')
     parser.add_argument('--num_samples_rel_error', type=int, default=None, help='Number of samples we want to use for the relative error computation.')
     parser.add_argument(
         'result_dir', type=str,
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         mt_error = MulTrajError()
         #with suppress_stdout():
         traj_list, mt_error = analyze_multiple_trials(
-            args.result_dir, est_type_i, n_trials, args.recalculate_errors, args.relative_errors_sublengths, num_samples_rel_error=args.num_samples_rel_error)
+            args.result_dir, est_type_i, n_trials, args.recalculate_errors, args.predefined_sublengths, num_samples_rel_error=args.num_samples_rel_error)
         if traj_list:
             plot_traj = traj_list[args.mul_plot_idx[0]]
         # else:
