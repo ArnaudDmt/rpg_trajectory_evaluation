@@ -7,6 +7,7 @@ import os
 import random
 import numpy as np
 import transformations as tf
+import numba
 
 
 def get_rigid_body_trafo(quat, trans):
@@ -22,7 +23,7 @@ def get_distance_from_start(gt_translation):
     distances = np.concatenate(([0], distances))
     return distances
 
-
+@numba.njit
 def compute_comparison_indices_length(distances, dist, max_dist_diff, num_pairs = None):
     max_idx = len(distances)
     comparisons = []
@@ -33,7 +34,6 @@ def compute_comparison_indices_length(distances, dist, max_dist_diff, num_pairs 
         chosen_indices = [idx for idx in range(max_idx)]
     else:
         chosen_indices = random.sample(valid_indices, min(num_pairs, len(valid_indices)))
-    
     for idx in chosen_indices:
         best_idx = -1
         error = max_dist_diff

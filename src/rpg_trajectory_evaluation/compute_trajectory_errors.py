@@ -2,10 +2,14 @@
 
 import os
 import numpy as np
+import math
+
+import numba
 
 import trajectory_utils as tu
 import transformations as tf
 
+from trajectory_utils import compute_comparison_indices_length  # Direct import
 
 def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
                            accum_distances=[], scale=1.0, num_pairs=None):
@@ -65,6 +69,7 @@ def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
         np.array(error_yaw), np.array(error_gravity), np.array(e_rot),\
         np.array(e_rot_deg_per_m)
 
+
 def compute_absolute_error(p_es_aligned, q_es_aligned, p_gt, q_gt):
     e_trans_vec = (p_gt-p_es_aligned)
     e_trans = np.sqrt(np.sum(e_trans_vec**2, 1))
@@ -88,3 +93,4 @@ def compute_absolute_error(p_es_aligned, q_es_aligned, p_gt, q_gt):
     e_scale_perc = np.abs((np.divide(dist_es, dist_gt)-1.0) * 100)
 
     return e_trans, e_trans_z, e_trans_vec, e_rot, e_ypr, e_scale_perc
+
