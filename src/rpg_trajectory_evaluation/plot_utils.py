@@ -42,7 +42,7 @@ def boxplot_compare(ax, xlabels,
         # print("Positions: {0}".format(positions))
         bp = ax.boxplot(d, 0, '', positions=positions, widths=widths)
         color_box(bp, data_colors[idx])
-        tmp, = plt.plot([1, 1], c=data_colors[idx], alpha=0)
+        tmp, = plt.plot([1, 1], c=data_colors[idx], alpha=1.0)
         leg_handles.append(tmp)
         leg_labels.append(data_labels[idx])
         idx += 1
@@ -58,10 +58,19 @@ def boxplot_compare(ax, xlabels,
     map(lambda x: x.set_visible(False), leg_handles)
 
 
-def plot_trajectory_top(ax, pos, color, name, alpha=1.0):
+def plot_trajectory_top(figTest, color2, ax, pos, color, name, alpha=1.0):
     ax.grid(ls='--', color='0.7')
     # pos_0 = pos - pos[0, :]
     ax.plot(pos[:, 0], pos[:, 1], color, linestyle='-', alpha=alpha, label=name)
+    figTest.add_trace(go.Scatter(
+    x=pos[:, 0],
+    y=pos[:, 1],
+    mode='lines',
+    line=dict(color=color2, dash='solid'),  # 'solid' for continuous line
+    opacity=alpha,
+    name=name
+    ))
+    
 
 
 def plot_trajectory_side(ax, pos, color, name, alpha=1.0):

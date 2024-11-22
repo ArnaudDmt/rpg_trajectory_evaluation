@@ -16,6 +16,8 @@ import align_utils as au
 from metrics import kRelMetrics, kRelMetricLables
 
 import transformations as tf
+from trajectory_utils import get_distance_from_start  # Direct import
+
 
 
 class Trajectory:
@@ -147,9 +149,9 @@ class Trajectory:
         if self.p_es.size == 0:
             print(Fore.RED+"Empty estimate file.")
             return False
-        self.accum_distances = traj_utils.get_distance_from_start(self.p_gt_raw)
+        self.accum_distances = get_distance_from_start(self.p_gt_raw)
         self.traj_length = self.accum_distances[-1]
-        self.accum_distances = traj_utils.get_distance_from_start(self.p_gt)
+        self.accum_distances = get_distance_from_start(self.p_gt)
 
         if os.path.isfile(self.cached_rel_err_fn):
             print('Loading cached relative (odometry) errors from ' +
@@ -281,7 +283,7 @@ class Trajectory:
             print(Fore.RED+'Calculating RMSE...')
             # align trajectory if necessary
             self.align_trajectory()
-            e_trans, e_trans_z, e_trans_vec, e_rot, e_ypr, e_scale_perc =\
+            e_trans, e_trans_x_y, e_trans_z, e_trans_vec, e_rot, e_ypr, e_tilt, e_scale_perc =\
                 traj_err.compute_absolute_error(self.p_es_aligned,
                                                 self.q_es_aligned,
                                                 self.p_gt,
@@ -292,7 +294,7 @@ class Trajectory:
 
             self.abs_errors['abs_e_trans'] = e_trans
             self.abs_errors['abs_e_trans_stats'] = stats_trans
-
+            self.abs_errors['abs_e_trans_x_y'] = e_trans_x_y
             self.abs_errors['abs_e_trans_z'] = e_trans_z
             self.abs_errors['abs_e_trans_vec'] = e_trans_vec
 
@@ -300,6 +302,7 @@ class Trajectory:
             self.abs_errors['abs_e_rot_stats'] = stats_rot
 
             self.abs_errors['abs_e_ypr'] = e_ypr
+            self.abs_errors['abs_e_tilt'] = e_tilt
 
             self.abs_errors['abs_e_scale_perc'] = e_scale_perc
             self.abs_errors['abs_e_scale_stats'] = stats_scale
@@ -348,7 +351,7 @@ class Trajectory:
             print("Computing relative error at sub-trajectory "
                   "length {0}".format(subtraj_len))
             Tcm = np.identity(4)
-            _, e_trans, e_trans_z, e_trans_perc, e_yaw, e_gravity, e_rot, e_rot_deg_per_m =\
+            _, e_trans, e_trans_z,  e_trans_x_y_norm, e_trans_perc, e_yaw, e_tilt, e_gravity, e_rot, e_rot_deg_per_m =\
                 traj_err.compute_relative_error(
                     self.p_es, self.q_es, self.p_gt, self.q_gt, Tcm,
                     subtraj_len, max_dist_diff, self.accum_distances,
@@ -359,6 +362,9 @@ class Trajectory:
                             'rel_trans_z': e_trans_z,
                             'rel_trans_stats_z':
                             res_writer.compute_statistics(e_trans_z),
+                            'rel_trans_x_y_norm': e_trans_x_y_norm,
+                            'rel_trans_x_y_norm_stats':
+                            res_writer.compute_statistics(e_trans_x_y_norm),
                             'rel_trans_perc': e_trans_perc,
                             'rel_trans_perc_stats':
                             res_writer.compute_statistics(e_trans_perc),
@@ -368,6 +374,9 @@ class Trajectory:
                             'rel_yaw': e_yaw,
                             'rel_yaw_stats':
                             res_writer.compute_statistics(e_yaw),
+                            'rel_tilt': e_tilt,
+                            'rel_tilt_stats':
+                            res_writer.compute_statistics(e_tilt),
                             'rel_gravity': e_gravity,
                             'rel_gravity_stats':
                             res_writer.compute_statistics(e_gravity),
