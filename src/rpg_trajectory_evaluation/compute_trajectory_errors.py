@@ -54,7 +54,7 @@ def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
         ez_estimated = np.dot(R_estimated, e_z)
         # Compute the scalar product
         scalar_product = np.dot(ez_ground_truth, ez_estimated)
-        tilt_error = np.arccos(scalar_product) *180.0/np.pi
+        tilt_error = np.arccos(scalar_product)
 
         errors.append([T_error_in_w, tilt_error])
 
@@ -77,14 +77,14 @@ def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
         error_trans_perc.append(tn / dist * 100)
         ypr_angles = tf.euler_from_matrix(poseError, 'rzyx')
         e_rot.append(tu.compute_angle(poseError))
-        error_yaw.append(abs(ypr_angles[0])*180.0/np.pi)
-        error_tilt.append(tiltError*180.0/np.pi)
+        error_yaw.append(np.rad2deg(np.array(abs(ypr_angles[0]))))
+        error_tilt.append(np.rad2deg(np.array(tiltError)))
         error_gravity.append(
             np.sqrt(ypr_angles[1]**2+ypr_angles[2]**2)*180.0/np.pi)
         e_rot_deg_per_m.append(e_rot[-1] / dist)
 
     return errors, np.array(error_trans_norm), np.array(error_trans_z), np.array(error_trans_x_y_norm),  np.array(error_trans_perc),\
-        np.array(error_yaw), np.array(error_yaw), np.array(error_gravity), np.array(e_rot),\
+        np.array(error_yaw), np.array(error_tilt), np.array(error_gravity), np.array(e_rot),\
         np.array(e_rot_deg_per_m)
 
 
@@ -102,7 +102,7 @@ def compute_absolute_error(p_es_aligned, q_es_aligned, p_gt, q_gt):
         R_we = tf.matrix_from_quaternion(q_es_aligned[i, :])
         R_wg = tf.matrix_from_quaternion(q_gt[i, :])
         e_R = np.dot(R_we, np.linalg.inv(R_wg))
-        e_ypr[i, :] = tf.euler_from_matrix(e_R, 'rzyx')
+        e_ypr[i, :] = np.rad2deg(np.array(tf.euler_from_matrix(e_R, 'rzyx')))
         e_rot[i] = np.rad2deg(np.linalg.norm(tf.logmap_so3(e_R[:3, :3])))
 
         # Computing the error on the tilt estimate
@@ -115,7 +115,7 @@ def compute_absolute_error(p_es_aligned, q_es_aligned, p_gt, q_gt):
         # Compute the scalar product
         scalar_product = np.dot(ez_ground_truth, ez_estimated)
 
-        e_tilt[i] = np.arccos(scalar_product)*180.0/np.pi
+        e_tilt[i] = np.rad2deg(np.arccos(scalar_product))
 
         
 
