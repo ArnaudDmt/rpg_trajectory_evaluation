@@ -71,7 +71,7 @@ def compute_relative_error(p_es, q_es, p_gt, q_gt, T_cm, dist, max_dist_diff,
         poseError = e[0]
         tiltError = e[1]
         tn = np.linalg.norm(poseError[0:3, 3])
-        error_trans_z.append(poseError[2, 3])
+        error_trans_z.append(np.abs(poseError[2, 3]))
         error_trans_x_y_norm.append(np.linalg.norm(poseError[0:2, 3]))
         error_trans_norm.append(tn)
         error_trans_perc.append(tn / dist * 100)

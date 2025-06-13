@@ -8,7 +8,7 @@ import random
 import numpy as np
 import transformations as tf
 import numba
-
+import bisect
 
 def get_rigid_body_trafo(quat, trans):
     T = tf.quaternion_matrix(quat)
@@ -24,26 +24,45 @@ def get_distance_from_start(gt_translation):
     return distances
 
 @numba.njit
-def compute_comparison_indices_length(distances, dist, max_dist_diff, num_pairs = None):
+def binary_search_left(arr, target, lo, hi):
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if arr[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+@numba.njit
+def compute_comparison_indices_length(distances, dist, max_dist_diff, num_pairs=None):
     max_idx = len(distances)
     comparisons = []
-    valid_indices = [idx for idx in range(max_idx) if distances[idx] + dist <= distances[-1]]
 
-    # Choose random start indices from the valid range
-    if num_pairs == None:
-        chosen_indices = [idx for idx in range(max_idx)]
-    else:
-        chosen_indices = random.sample(valid_indices, min(num_pairs, len(valid_indices)))
-    for idx in chosen_indices:
+    for idx in range(max_idx):
+        if distances[idx] + dist > distances[-1]:
+            continue
+
+        target = distances[idx] + dist
+        insert_idx = binary_search_left(distances, target, idx + 1, max_idx)
+
         best_idx = -1
-        error = max_dist_diff
-        for i in range(idx, max_idx):
-            if np.abs(distances[i] - (distances[idx] + dist)) < error:
-                best_idx = i
-                error = np.abs(distances[i] - (distances[idx] + dist))
+        min_error = max_dist_diff
+
+        # Check candidate points near insert_idx
+        if insert_idx < max_idx:
+            err = abs(distances[insert_idx] - target)
+            if err < min_error:
+                min_error = err
+                best_idx = insert_idx
+
+        if insert_idx - 1 > idx:
+            err = abs(distances[insert_idx - 1] - target)
+            if err < min_error:
+                min_error = err
+                best_idx = insert_idx - 1
+
         if best_idx != -1:
             comparisons.append((idx, best_idx))
-
     return comparisons
 
 
