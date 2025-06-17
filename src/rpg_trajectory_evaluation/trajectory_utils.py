@@ -9,6 +9,7 @@ import numpy as np
 import transformations as tf
 import numba
 import bisect
+from alive_progress import alive_bar
 
 def get_rigid_body_trafo(quat, trans):
     T = tf.quaternion_matrix(quat)
@@ -16,11 +17,19 @@ def get_rigid_body_trafo(quat, trans):
     return T
 
 
+@numba.njit
 def get_distance_from_start(gt_translation):
-    distances = np.diff(gt_translation[:, 0:3], axis=0)
-    distances = np.sqrt(np.sum(np.multiply(distances, distances), 1))
-    distances = np.cumsum(distances)
-    distances = np.concatenate(([0], distances))
+    n = gt_translation.shape[0]
+    distances = np.empty(n)
+    distances[0] = 0.0
+
+    for i in range(1, n):
+        dx = gt_translation[i, 0] - gt_translation[i - 1, 0]
+        dy = gt_translation[i, 1] - gt_translation[i - 1, 1]
+        dz = gt_translation[i, 2] - gt_translation[i - 1, 2]
+        distances[i] = distances[i - 1] + (dx * dx + dy * dy + dz * dz) ** 0.5
+
+    print(distances[-1])
     return distances
 
 @numba.njit

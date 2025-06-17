@@ -46,6 +46,7 @@ def analyze_multiple_trials(results_dir, est_type, n_trials,
                             recalculate_errors=False,
                             preset_boxplot_distances=[], 
                             num_samples_rel_error = None,
+                            compute_absolute_error=False,
                             preset_boxplot_percentages=[0.1, 0.2, 0.3, 0.4, 0.5],
                             compute_odometry_error=True):
     traj_list = []
@@ -71,7 +72,8 @@ def analyze_multiple_trials(results_dir, est_type, n_trials,
             preset_boxplot_distances=preset_boxplot_distances,
             preset_boxplot_percentages=preset_boxplot_percentages)
         if traj.data_loaded:
-            traj.compute_absolute_error()
+            if compute_absolute_error:
+                traj.compute_absolute_error()
             if compute_odometry_error:
                 traj.compute_relative_errors(num_pairs = num_samples_rel_error)
         if traj.success:
@@ -120,6 +122,8 @@ if __name__ == '__main__':
         default=['traj_est'])
     parser.add_argument('--recalculate_errors',
                         help='Deletes cached errors', action='store_true')
+    parser.add_argument('--compute_absolute_error',
+                        help='Compute the absolute errors.', action='store_true')
     parser.add_argument('--png',
                         help='Save plots as png instead of pdf',
                         action='store_true')
@@ -183,7 +187,7 @@ if __name__ == '__main__':
         mt_error = MulTrajError()
         #with suppress_stdout():
         traj_list, mt_error = analyze_multiple_trials(
-            args.result_dir, est_type_i, n_trials, args.recalculate_errors, args.predefined_sublengths, num_samples_rel_error=args.num_samples_rel_error)
+            args.result_dir, est_type_i, n_trials, args.recalculate_errors, args.predefined_sublengths, num_samples_rel_error=args.num_samples_rel_error, compute_absolute_error=args.compute_absolute_error)
         if traj_list:
             plot_traj = traj_list[args.mul_plot_idx[0]]
         # else:

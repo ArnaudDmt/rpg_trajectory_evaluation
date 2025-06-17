@@ -1,5 +1,8 @@
 #!/usr/bin/env python2
 
+import bisect
+from alive_progress import alive_bar
+
 # adapted from 
 # https://svncvpr.in.tum.de/cvpr-ros-pkg/trunk/rgbd_benchmark/rgbd_benchmark_tools/src/rgbd_benchmark_tools/associate.py
 # with the following license
@@ -49,6 +52,24 @@ def read_timestamps(filename):
     stamps = [float(v[0]) for v in data_list]
     return stamps
 
+def find_matches(first_stamps, second_stamps, offset, max_difference):
+    shifted_seconds = [b + offset for b in second_stamps]
+    indexed = sorted((val, idx) for idx, val in enumerate(shifted_seconds))
+    sorted_vals = [val for val, _ in indexed]
+    
+    matches = []
+    with alive_bar(len(first_stamps), title='Finding matches.') as bar:
+        for idx_a, a in enumerate(first_stamps):
+            lo = bisect.bisect_left(sorted_vals, a - max_difference)
+            hi = bisect.bisect_right(sorted_vals, a + max_difference)
+            
+            for i in range(lo, hi):
+                val, idx_b = indexed[i]
+                diff = abs(a - val)
+                matches.append((diff, idx_a, idx_b))
+            bar()
+    
+    return matches
 
 def associate(first_stamps, second_stamps, offset, max_difference):
     """
@@ -59,20 +80,21 @@ def associate(first_stamps, second_stamps, offset, max_difference):
     Output:
     sorted list of matches (match_first_idx, match_second_idx)
     """
-    potential_matches = [(abs(a - (b + offset)), idx_a, idx_b)
-                         for idx_a, a in enumerate(first_stamps)
-                         for idx_b, b in enumerate(second_stamps)
-                         if abs(a - (b + offset)) < max_difference]
+    potential_matches = find_matches(first_stamps, second_stamps, offset, max_difference)
+    
     potential_matches.sort()  # prefer the closest
     matches = []
+
     first_idxes = list(range(len(first_stamps)))
     second_idxes = list(range(len(second_stamps)))
+    first_idxes = set(first_idxes)
+    second_idxes = set(second_idxes)
+
     for diff, idx_a, idx_b in potential_matches:
         if idx_a in first_idxes and idx_b in second_idxes:
             first_idxes.remove(idx_a)
             second_idxes.remove(idx_b)
             matches.append((int(idx_a), int(idx_b)))
-
     matches.sort()
     return matches
 
@@ -82,6 +104,7 @@ def read_files_and_associate(first_file, second_file, offset, max_diff):
     second_stamps = read_timestamps(second_file)
 
     return associate(first_stamps, second_stamps, offset, max_diff)
+
 
 if __name__ == '__main__':
     pass

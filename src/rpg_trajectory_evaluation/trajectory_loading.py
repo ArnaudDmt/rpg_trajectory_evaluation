@@ -26,7 +26,6 @@ def load_estimate_and_associate(fn_gt,
         np.savetxt(fn_matches, np.array(matches, dtype=int), fmt='%d')
         print(Fore.YELLOW +
               "Saved matching results to {0}.".format(fn_matches))
-
     dict_matches = dict(matches)
 
     data_es = np.loadtxt(fn_es)
@@ -68,10 +67,8 @@ def load_stamped_dataset(results_dir,
     '''
     fn_gt = os.path.join(results_dir, nm_gt)
     data_gt = np.loadtxt(fn_gt)
-
     fn_es = os.path.join(results_dir, nm_est)
     fn_matches = os.path.join(results_dir, nm_matches)
-
     return load_estimate_and_associate(
         fn_gt, fn_es, fn_matches, data_gt, max_diff, start_t_sec, end_t_sec)
 

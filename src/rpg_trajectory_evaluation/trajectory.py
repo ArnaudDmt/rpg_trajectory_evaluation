@@ -94,8 +94,6 @@ class Trajectory:
                 print("Will analyze trajectory ranging from {} to {}.".format(
                     self.start_time_sec, self.end_time_sec))
 
-        self.abs_errors = {}
-
         # we cache relative error since it is time-comsuming to compute
         self.rel_errors = {}
         self.cached_rel_err_fn = os.path.join(
@@ -122,6 +120,9 @@ class Trajectory:
             self.compute_boxplot_distances()
 
         self.align_trajectory()
+        self.abs_errors = {}        
+
+        print("Finished loading trajectory.")
 
     def load_data(self, nm_gt, nm_est, nm_matches):
         """
@@ -146,6 +147,7 @@ class Trajectory:
             traj_loading.load_raw_groundtruth(self.data_dir, nm_gt,
                                               start_t_sec=self.start_time_sec,
                                               end_t_sec=self.end_time_sec)
+        
         if self.p_es.size == 0:
             print(Fore.RED+"Empty estimate file.")
             return False
@@ -312,18 +314,19 @@ class Trajectory:
         return
 
     def write_errors_to_yaml(self):
-        self.abs_err_stats_fn = os.path.join(
-            self.saved_results_dir, 'absolute_err_statistics'+'_' +
-            self.align_str + self.suffix_str + '.yaml')
-        res_writer.update_and_save_stats(
-            self.abs_errors['abs_e_trans_stats'], 'trans',
-            self.abs_err_stats_fn)
-        res_writer.update_and_save_stats(
-            self.abs_errors['abs_e_rot_stats'], 'rot',
-            self.abs_err_stats_fn)
-        res_writer.update_and_save_stats(
-            self.abs_errors['abs_e_scale_stats'], 'scale',
-            self.abs_err_stats_fn)
+        if self.abs_errors:
+            self.abs_err_stats_fn = os.path.join(
+                self.saved_results_dir, 'absolute_err_statistics'+'_' +
+                self.align_str + self.suffix_str + '.yaml')
+            res_writer.update_and_save_stats(
+                self.abs_errors['abs_e_trans_stats'], 'trans',
+                self.abs_err_stats_fn)
+            res_writer.update_and_save_stats(
+                self.abs_errors['abs_e_rot_stats'], 'rot',
+                self.abs_err_stats_fn)
+            res_writer.update_and_save_stats(
+                self.abs_errors['abs_e_scale_stats'], 'scale',
+                self.abs_err_stats_fn)
 
         self.rel_error_stats_fns = []
         for dist in self.rel_errors:
