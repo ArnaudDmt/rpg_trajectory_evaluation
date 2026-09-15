@@ -337,6 +337,9 @@ class Trajectory:
                 Trajectory.rel_error_prefix+dist_str + 
                 self.suffix_str + '.yaml')
             for et, label in zip(kRelMetrics, kRelMetricLables):
+                # A cache written before a metric was exported simply has no stats for it.
+                if et + '_stats' not in cur_err:
+                    continue
                 res_writer.update_and_save_stats(
                     cur_err[et+'_stats'], label, dist_fn)
 
@@ -363,7 +366,12 @@ class Trajectory:
                             'rel_trans_stats':
                             res_writer.compute_statistics(e_trans),
                             'rel_trans_z': e_trans_z,
+                            # Kept under both names: 'rel_trans_stats_z' is what the older
+                            # caches on disk carry, '_stats' is the suffix every other metric
+                            # uses and the one kRelMetrics indexes by.
                             'rel_trans_stats_z':
+                            res_writer.compute_statistics(e_trans_z),
+                            'rel_trans_z_stats':
                             res_writer.compute_statistics(e_trans_z),
                             'rel_trans_x_y_norm': e_trans_x_y_norm,
                             'rel_trans_x_y_norm_stats':
